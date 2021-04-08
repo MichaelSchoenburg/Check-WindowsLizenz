@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+#region KOMMENTARBASIERTE HILFE
 
 <#
 .SYNOPSIS
@@ -49,6 +49,10 @@
     Autor:      Michael Schoenburg (IT-Center Engels)
 #>
 
+#endregion KOMMENTARBASIERTE HILFE
+#-----------------------------------------------------------------------------------------------------------------
+#region SCRIPT-PARAMETER
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, Position = 0)]
@@ -57,7 +61,9 @@ param (
     $TageImVorausWarnen = 7
 )
 
-# ---------------------------------------------- Funktionen ------------------------------------------------------
+#endregion SCRIPT-PARAMETER
+#-----------------------------------------------------------------------------------------------------------------
+#region FUNKTIONEN
 
 function Get-TageVonSlmgrWert {
     [CmdletBinding()]
@@ -78,11 +84,11 @@ function Get-TageVonSlmgrWert {
     
     Write-Debug 'SlmgrAusgabe:'
     for ($i = 0; $i -lt $SlmgrAusgabe.Count; $i++) {
-        Write-Debug '$( $i ) = $( $SlmgrAusgabe[$i] )'
+        Write-Debug "$( $i ) = $( $SlmgrAusgabe[$i] )"
     }
 
     try {
-        $tage = Get-SlmgrEigenschaft -SlmgrAusgabe $slmgrAusgabe -Eigenschaft $Eigenschaft
+        $tage = Get-SlmgrEigenschaft -Slmgr $slmgrAusgabe -E $Eigenschaft
         Write-Debug "tage - initial = $( $tage )"
 
         # Tage auslesen
@@ -106,7 +112,7 @@ function Get-TageVonSlmgrWert {
         }
     }
     
-    Write-Debug "tage - fainal = $( $tage )"
+    Write-Debug "tage - final = $( $tage )"
     return [int]$tage
 }
 
@@ -270,10 +276,13 @@ function Get-WindowsProductKey {
     return $productKey
 }
 
-# -------------------------------------------- Deklarationenen ---------------------------------------------------
+#endregion FUNKTIONEN
+#-----------------------------------------------------------------------------------------------------------------
+#region DEKLARATIONEN
 
-# Windowslizenzschluessel
+#region Windowslizenzschluessel
 $Windowslizenzschluessel = Get-WindowsProductKey
+#endregion Windowslizenzschluessel
 
 #region Ausgabe von SLMGR einfangen
 $OriginalLizenzDetails = cscript C:\Windows\System32\slmgr.vbs /dlv
@@ -306,23 +315,44 @@ switch ($Sprache) {
     'Englisch' {
         $WindowsVersionPhrase = 'Name'
         $LizenzStatusPhrase = 'License Status'
+        $BenachrichtigungsgrundPhrase = 'Notification Reason'
         $VerbleibendeTagePhrase = 'Timebased activation expiration'
         $Tagbezeichnung = 'Day'
         $IstLizenziertPhrase = 'Licensed'
-        $Rearms = Get-SlmgrEigenschaft -SlmgrAusgabe $LizenzDetails -Eigenschaft 'Remaining Windows rearm count'
+        $Benachrichtigung = 'Notification'
+
+        $Rearms = Get-SlmgrEigenschaft -Slmgr $LizenzDetails -E 'Remaining Windows rearm count'
     }
     'Deutsch' {
         $WindowsVersionPhrase = 'Name'
         $LizenzStatusPhrase = 'Lizenzstatus'
+        $BenachrichtigungsgrundPhrase = 'Benachrichtigungsgrund'
         $VerbleibendeTagePhrase = 'Ablauf der zeitbegrenzten Aktivierung'
         $Tagbezeichnung = 'Tag'
         $IstLizenziertPhrase = 'Lizenziert'
-        $Rearms = Get-SlmgrEigenschaft -SlmgrAusgabe $LizenzDetails -DeutscheRearms
+        $Benachrichtigung = 'Benachrichtigung'
+
+        $Rearms = Get-SlmgrEigenschaft -Slmgr $LizenzDetails -DeutscheRearms
     }
 }
 
-$WindowsVersion = Get-SlmgrEigenschaft -SlmgrAusgabe $LizenzDetails -Eigenschaft $WindowsVersionPhrase
-$Lizenzstatus = Get-SlmgrEigenschaft -SlmgrAusgabe $LizenzDetails -Eigenschaft $LizenzStatusPhrase
+$WindowsVersion = Get-SlmgrEigenschaft -Slmgr $LizenzDetails -E $WindowsVersionPhrase
+
+$Lizenzstatus = Get-SlmgrEigenschaft -Slmgr $LizenzDetails -E $LizenzStatusPhrase
+
+if ($Lizenzstatus -eq $Benachrichtigung) {
+    $Benachrichtigungsgrund = Get-SlmgrEigenschaft -Slmgr $LizenzDetails -E $BenachrichtigungsgrundPhrase
+} else {
+    $Benachrichtigungsgrund = '-'
+}
+
+# Splatting fuer Get-TageVonSlmgrWert
+$Params = @{
+    SlmgrAusgabe    = $LizenzDetails 
+    Eigenschaft     = $VerbleibendeTagePhrase 
+    Tagbezeichnung  = $Tagbezeichnung
+}
+[int]$VerbleibendeTage = Get-TageVonSlmgrWert $Params
 
 if ($Lizenzstatus -eq $IstLizenziertPhrase) {
     $IstLizenziert = $true
@@ -330,33 +360,51 @@ if ($Lizenzstatus -eq $IstLizenziertPhrase) {
     $IstLizenziert = $false
 }
 
-[int]$VerbleibendeTage = Get-TageVonSlmgrWert -SlmgrAusgabe $LizenzDetails -Eigenschaft $VerbleibendeTagePhrase -Tagbezeichnung $Tagbezeichnung
 #endregion Mapping der SLMGR-Ausgabe (je nach Sprache)
 
-# -------------------------------------- Ausgabe fuer Solarwinds RMM ----------------------------------------------
+#endregion DEKLARATIONEN
+#-----------------------------------------------------------------------------------------------------------------
+#region AUSGABE UND EXITCODE FUER DAS N-CENTRAL RMM
 
-Write-Host '================= Ergebnis ================='
-Write-Host "WindowsVersion        = $( $WindowsVersion )"
-Write-Host "Lizenzschluessel      = $( $Windowslizenzschluessel )"
-Write-Host "Lizenzstatus          = $( $Lizenzstatus )"
-Write-Host "Verbleibende Rearms   = $( $Rearms )"
-Write-Host "Verbleibende Tage     = $( $VerbleibendeTage )"
+Write-Host "Lizenzschluessel        = $( $Windowslizenzschluessel )"
+Write-Host "WindowsVersion          = $( $WindowsVersion )"
+Write-Host "Verbleibende Tage       = $( $VerbleibendeTage )"
+Write-Host "Verbleibende Rearms     = $( $Rearms )"
+Write-Host "Lizenzstatus            = $( $Lizenzstatus )"
+Write-Host "Benachrichtigungsgrund  = $( $Benachrichtigungsgrund )"
+
+if ($Benachrichtigungsgrund -ne '-') {
+    Write-Host 'Übersicht über die Fehlercodes: https://docs.microsoft.com/de-de/windows-server/get-started/activation-error-codes'
+
+    switch ($Benachrichtigungsgrund) {
+        '0xC004F034' {
+            Write-Host 'Benachrichtigungsgrund 0xC004F034:'
+            Write-Host 'Ist ein Bug, der aufkommt, wenn man von einer älteren Windowsversion auf Windows 10 upgraded.'
+            Write-Host 'Quelle 1: https://ugetfix.com/ask/how-to-fix-windows-10-activation-error-code-0xc004f034/'
+            Write-Host 'Quelle 2: https://www.dell.com/support/kbdoc/de-de/000129709/der-fehlercode-wird-von-windows-nicht-aktiviert-0xc004f034'
+        }
+        '0xC004F009' {
+            Write-Host 'Vom Softwareschutzdienst wurde gemeldet, dass der Zeitraum bis zur Aktivierung abgelaufen ist.'
+        }
+    }
+}
 
 if ($IstLizenziert) {
-    # Wenn wenier als oder genau sieben Tage verbleiben
-    # Wenn $tageImVorausWarnen null ist, wird nie im Vorausgewarnt
     Write-Debug 'Windows ist lizenziert.'
+
+    # Wenn weniger als oder genau sieben Tage verbleiben
+    # Wenn $tageImVorausWarnen null ist, wird nie im Vorausgewarnt
     if ($VerbleibendeTage -le $tageImVorausWarnen) {
-        # Die Solarwinds RMM-ueberpruefung laeuft als Fehlgeschlagen durch
         Write-Debug '$VerbleibendeTage ist weniger als $tageImVorausWarnen.'
-        exit 1001
+        Exit 1001
     } else {
-        # Die Solarwinds RMM-ueberpruefung laeuft als OK durch
         Write-Debug '$VerbleibendeTage ist NICHT weniger als oder gleich $tageImVorausWarnen.'
-        exit 0
+        Exit 0
     }
 } else {
-    # Die Solarwinds RMM-ueberpruefung laeuft als Fehlgeschlagen durch
     Write-Debug 'Windows ist nicht lizenziert.'
-    exit 1001
+    Exit 1001
 }
+
+#endregion AUSGABE UND EXITCODE FUER DAS N-CENTRAL RMM
+#-----------------------------------------------------------------------------------------------------------------

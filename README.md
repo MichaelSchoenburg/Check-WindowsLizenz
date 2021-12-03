@@ -1,5 +1,5 @@
 # Check-WindowsLizenz
-Lizenzueberpruefung fuer das N-able RMM
+Eine Lizenzueberpruefung fuer das N-able RMM
 
 ## Grundlegende Funktion:
   Gibt den Windows-Lizenzschluessel aus.

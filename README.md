@@ -15,6 +15,12 @@ Laeuft, als fehlgeschlagen durch, wenn:
 - Windows nicht lizenziert ist.
 - die Windows-Testversion in weniger als oder in sieben Tagen auslaeuft.
 
+Beispiel für die Konfiguration:
+<img src=".\Images\Beispiel-Konfiguration.jpg">
+
+Beispiel für eine Fehlermeldung:
+<img src=".\Images\Beispiel-Fehler.jpg">
+
 ## Wie nutzen?
 Check-WindowsLizenz.amp -> Dies ist die AutomationManager-Projektdatei, welche in das Solarwinds RMM hochgeladen werden muss.
 

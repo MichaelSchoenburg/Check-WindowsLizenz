@@ -1,5 +1,5 @@
 # Check-WindowsLizenz
-Lizenzueberpruefung fuer das Solarwinds RMM
+Lizenzueberpruefung fuer das N-able RMM
 
 ## Grundlegende Funktion:
   Gibt den Windows-Lizenzschluessel aus.
@@ -24,6 +24,6 @@ Beispiel für eine Fehlermeldung:
 <img src=".\Images\Beispiel-Fehler.jpg">
 
 ## Wie nutzen?
-Check-WindowsLizenz.amp -> Dies ist die AutomationManager-Projektdatei, welche in das Solarwinds RMM hochgeladen werden muss.
+Check-WindowsLizenz.amp -> Dies ist die AutomationManager-Projektdatei, welche in das N-able RMM Dashboard hochgeladen werden muss.
 
 Check-WindowsLizenz.ps1 -> Dies ist der rohe PowerShell-Code, zwecks einfacherer Bearbeitung und anschließendem Copy and Paste in die Projektdatei - wird für das Projekt nicht benötigt.

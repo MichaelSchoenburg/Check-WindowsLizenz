@@ -16,9 +16,11 @@ Laeuft, als fehlgeschlagen durch, wenn:
 - die Windows-Testversion in weniger als oder in sieben Tagen auslaeuft.
 
 Beispiel für die Konfiguration:
+
 <img src=".\Images\Beispiel-Konfiguration.jpg">
 
 Beispiel für eine Fehlermeldung:
+
 <img src=".\Images\Beispiel-Fehler.jpg">
 
 ## Wie nutzen?
